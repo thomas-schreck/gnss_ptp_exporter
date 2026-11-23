@@ -241,6 +241,23 @@ func TestDaemonDryRun(t *testing.T) {
 	}
 }
 
+func TestDaemonDryRunGrace(t *testing.T) {
+	// Without servo lines the decision to SET appears once the startup
+	// grace is over.
+	s := newSim(t, true, &State{"1013", t0 - 10})
+	s.cur = settings(6)
+	for range 9 {
+		s.step(nil)
+	}
+	if strings.Contains(s.logs.String(), "would SET") {
+		t.Fatalf("SET within the grace period:\n%s", s.logs.String())
+	}
+	s.step(nil)
+	if !strings.Contains(s.logs.String(), "would SET GRANDMASTER_SETTINGS_NP clockClass 7") {
+		t.Errorf("logs:\n%s", s.logs.String())
+	}
+}
+
 func TestDaemonErrors(t *testing.T) {
 	s := newSim(t, false, nil)
 	s.getErr = errors.New("ptp4l does not answer")

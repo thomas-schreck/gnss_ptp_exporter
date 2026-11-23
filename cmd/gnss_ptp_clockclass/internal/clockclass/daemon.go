@@ -244,7 +244,7 @@ func (d *Daemon) Tick(ctx context.Context) {
 		return
 	}
 	if u.PTP4LPID != d.pid {
-		d.env.Log.Info("ptp4l started", "pid", u.PTP4LPID, "known_pid", d.state.PID)
+		d.env.Log.Info("ptp4l running", "pid", u.PTP4LPID, "lock_memory_pid", d.state.PID)
 		d.pid = u.PTP4LPID
 	}
 
@@ -321,7 +321,7 @@ func (d *Daemon) logDecision(now time.Time, dec Decision, cur gmsettings.Setting
 	if haveCur {
 		current = strconv.Itoa(int(cur.ClockClass))
 	}
-	key := fmt.Sprintf("%d/%t/%t/%s", dec.Class, dec.Set, dec.Locked, current)
+	key := fmt.Sprintf("%d/%t/%t/%s", dec.Class, dec.Set && d.graceOver, dec.Locked, current)
 	attrs := append([]any{"current", current, "want", dec.Class, "set", dec.Set && d.graceOver,
 		"locked", dec.Locked, "limit_ns", dec.LimitNs}, decisionAttrs(dec)...)
 	if !d.DryRun() || (key == d.last && now.Sub(d.lastLogged) < time.Minute) {
