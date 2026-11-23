@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/thomas-schreck/gnss_ptp_exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/thomas-schreck/gnss_ptp_exporter/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/thomas-schreck/gnss_ptp_exporter/badge)](https://scorecard.dev/viewer/?uri=github.com/thomas-schreck/gnss_ptp_exporter)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/17046/badge)](https://www.bestpractices.dev/projects/17046)
 
 A Prometheus exporter for GNSS-disciplined time servers built from
 **GNSS receiver → gpsd → ts2phc → ptp4l**, the common Raspberry Pi
