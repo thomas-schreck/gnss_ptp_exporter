@@ -1,0 +1,71 @@
+name: Release
+
+# Push a tag vX.Y.Z (or vX.Y.Z-rc.1 for a pre-release) to build and publish.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write        # create the release
+      id-token: write        # build provenance
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go vet ./...
+          go test -race -count=1 ./...
+
+      - name: Build archives
+        run: scripts/dist.sh "${GITHUB_REF_NAME#v}"
+
+      - name: SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: spdx-json
+          output-file: dist/gnss_ptp_exporter-${{ github.ref_name }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.spdx.json > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.spdx.json
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=""
+          [[ "$GITHUB_REF_NAME" == *-* ]] && pre="--prerelease"
+          cat > notes.md <<NOTES
+          Verify a download: \`sha256sum -c SHA256SUMS --ignore-missing\` and
+          \`gh attestation verify <archive> -R ${GITHUB_REPOSITORY}\`.
+          The SPDX SBOM lists the Go modules compiled into the binaries.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" $pre --verify-tag \
+            --title "gnss_ptp_exporter ${GITHUB_REF_NAME}" --notes-file notes.md --generate-notes \
+            dist/*.tar.gz dist/*.spdx.json dist/SHA256SUMS

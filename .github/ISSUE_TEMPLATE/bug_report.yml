@@ -1,0 +1,35 @@
+name: Bug report
+description: Something does not work as expected.
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: gnss_ptp_exporter version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Setup
+      description: Receiver model and firmware, gpsd and linuxptp versions, OS, board.
+    validations:
+      required: true
+  - type: dropdown
+    id: part
+    attributes:
+      label: Collector
+      options: [gpsd, ptp4l, ts2phc, ublox, other]
+  - type: textarea
+    id: output
+    attributes:
+      label: Exporter log and relevant metrics
+      description: Remove positions and other data you do not want to publish.
+      render: text

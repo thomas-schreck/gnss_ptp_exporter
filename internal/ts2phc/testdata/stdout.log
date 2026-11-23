@@ -1,0 +1,4 @@
+ts2phc[359203.839]: /dev/ptp0 offset         -8 s2 freq    +134
+ts2phc[359204.839]: eth2 offset         12 s1 freq    -20
+ts2phc[359204.840]: /dev/ptp0 offset         -1 s2 freq    +139
+ts2phc[359205.839]: /dev/ptp0 offset          7 s2 freq    +146

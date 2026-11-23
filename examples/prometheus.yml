@@ -1,0 +1,9 @@
+# Scrape configuration for gnss_ptp_exporter (merge into prometheus.yml).
+scrape_configs:
+  - job_name: gnss_ptp
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["timeserver.example.net:10063"]
+
+rule_files:
+  - gnss_ptp_alerts.yml

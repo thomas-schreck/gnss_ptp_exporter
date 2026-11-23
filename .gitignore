@@ -1,0 +1,4 @@
+/gnss_ptp_exporter
+/dist/
+*.test
+*.out

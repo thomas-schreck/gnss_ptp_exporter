@@ -1,0 +1,14 @@
+# Weekly update PRs; each one goes through CI like any other change.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly

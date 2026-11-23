@@ -1,0 +1,103 @@
+# Example alerting rules for gnss_ptp_exporter. Thresholds suit a
+# Raspberry Pi grandmaster with a u-blox ZED-F9T and an Intel i226 PHC;
+# adjust them to your hardware. Validate with: promtool check rules <file>
+groups:
+  - name: gnss_ptp
+    rules:
+      - alert: GnssPtpExporterDown
+        expr: up{job="gnss_ptp"} == 0
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: "gnss_ptp_exporter on {{ $labels.instance }} is not scraped"
+
+      - alert: GpsdDown
+        expr: gpsd_up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "gpsd on {{ $labels.instance }} sends no position reports"
+
+      - alert: GnssNo3DFix
+        expr: gpsd_fix_mode < 3
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "GNSS receiver on {{ $labels.instance }} has no 3D fix (mode {{ $value }})"
+
+      - alert: GnssFewSatellites
+        expr: gpsd_satellites_used < 6
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Only {{ $value }} satellites used on {{ $labels.instance }}"
+
+      - alert: Ts2phcDown
+        expr: ts2phc_up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "ts2phc on {{ $labels.instance }} logged no servo line recently"
+
+      - alert: Ts2phcNotLocked
+        expr: ts2phc_servo_state < 2
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "ts2phc servo for {{ $labels.clock }} on {{ $labels.instance }} is not locked"
+
+      - alert: Ts2phcOffsetHigh
+        expr: abs(ts2phc_master_offset_nanoseconds) > 1000
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "PHC {{ $labels.clock }} on {{ $labels.instance }} is {{ $value }} ns from PPS"
+
+      - alert: Ptp4lDown
+        expr: ptp4l_up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "ptp4l on {{ $labels.instance }} does not answer on its management socket"
+
+      # Only for hosts meant to be grandmaster.
+      - alert: PtpNotGrandmaster
+        expr: ptp4l_up == 1 and ptp4l_grandmaster_role == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "ptp4l on {{ $labels.instance }} is not grandmaster"
+
+      - alert: PtpClockClassDegraded
+        expr: ptp4l_grandmaster_role == 1 and ptp4l_clock_class != 6
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Grandmaster {{ $labels.instance }} announces clockClass {{ $value }}"
+
+      - alert: GnssSpoofingIndicated
+        expr: gnss_spoofing_state >= 2
+        labels: {severity: critical}
+        annotations:
+          summary: "Receiver on {{ $labels.instance }} indicates spoofing (state {{ $value }})"
+
+      - alert: GnssJamming
+        expr: gnss_rf_jamming_state >= 2 or gnss_rf_jamming_indicator > 100
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "RF block {{ $labels.block }} on {{ $labels.instance }} reports jamming"
+
+      - alert: GnssAntennaFault
+        expr: gnss_rf_antenna_status == 3 or gnss_rf_antenna_status == 4
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "Antenna short or open on {{ $labels.instance }} (block {{ $labels.block }})"
+
+      - alert: GnssUbxPollFailing
+        expr: gnss_ubx_poll_success == 0
+        for: 15m
+        labels: {severity: info}
+        annotations:
+          summary: "UBX polls of the receiver on {{ $labels.instance }} fail"
