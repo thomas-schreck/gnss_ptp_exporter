@@ -3,6 +3,8 @@
 // The client only ever sends GET requests. Point it at ptp4l's read-only
 // socket (uds_ro_address, /var/run/ptp4lro by default), which rejects
 // anything but GET, so the exporter cannot change ptp4l even by mistake.
+// The clockClass helper's SET lives in cmd/gnss_ptp_clockclass/internal,
+// out of the exporter's reach.
 package ptp4l
 
 import (
@@ -12,6 +14,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -101,12 +104,22 @@ type Client struct {
 
 var clientSeq atomic.Uint64
 
-// Dial connects to the ptp4l socket at path. The client binds an abstract
-// Unix socket so that ptp4l can answer even when it runs with PrivateTmp
-// or the exporter has no writable directory.
+// Dial connects to the ptp4l socket at path for GET requests.
 func Dial(path string, domain uint8, deadline time.Time) (*Client, error) {
+	conn, err := DialSocket(path, deadline)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{conn: conn, domain: domain}, nil
+}
+
+// DialSocket connects a datagram socket to ptp4l's management socket at
+// path and sets deadline on it. It binds an abstract Unix socket named
+// after the program, so that ptp4l can answer even when it runs with
+// PrivateTmp or the caller has no writable directory. It sends nothing.
+func DialSocket(path string, deadline time.Time) (*net.UnixConn, error) {
 	laddr := &net.UnixAddr{Net: "unixgram",
-		Name: fmt.Sprintf("@gnss_ptp_exporter.%d.%d", os.Getpid(), clientSeq.Add(1))}
+		Name: fmt.Sprintf("@%s.%d.%d", filepath.Base(os.Args[0]), os.Getpid(), clientSeq.Add(1))}
 	conn, err := net.DialUnix("unixgram", laddr, &net.UnixAddr{Net: "unixgram", Name: path})
 	if err != nil {
 		return nil, err
@@ -115,7 +128,7 @@ func Dial(path string, domain uint8, deadline time.Time) (*Client, error) {
 		_ = conn.Close()
 		return nil, err
 	}
-	return &Client{conn: conn, domain: domain}, nil
+	return conn, nil
 }
 
 // Close closes the socket.
@@ -149,19 +162,21 @@ func (c *Client) Get(id protocol.ManagementID, port uint16) (protocol.Management
 		if err != nil {
 			return nil, err
 		}
-		tlv, err := matchResponse(buf[:n], id, c.seq)
-		if errors.Is(err, errSkip) {
+		tlv, err := MatchResponse(buf[:n], id, c.seq)
+		if errors.Is(err, ErrSkip) {
 			continue
 		}
 		return tlv, err
 	}
 }
 
-var errSkip = errors.New("not the response we wait for")
+// ErrSkip is returned by MatchResponse for a datagram that answers another
+// request; the caller reads the next one.
+var ErrSkip = errors.New("not the response we wait for")
 
-// matchResponse decodes a datagram and checks that it answers request
-// (id, seq).
-func matchResponse(b []byte, id protocol.ManagementID, seq uint16) (protocol.ManagementTLV, error) {
+// MatchResponse decodes a datagram and checks that it answers request
+// (id, seq). A MANAGEMENT_ERROR_STATUS answer is returned as *ErrorStatus.
+func MatchResponse(b []byte, id protocol.ManagementID, seq uint16) (protocol.ManagementTLV, error) {
 	pkt, err := protocol.DecodePacket(b)
 	if err != nil {
 		return nil, fmt.Errorf("decoding ptp4l response: %w", err)
@@ -169,17 +184,17 @@ func matchResponse(b []byte, id protocol.ManagementID, seq uint16) (protocol.Man
 	switch p := pkt.(type) {
 	case *protocol.Management:
 		if p.SequenceID != seq || p.TLV == nil || p.TLV.MgmtID() != id {
-			return nil, errSkip
+			return nil, ErrSkip
 		}
 		if p.Action() != protocol.RESPONSE {
-			return nil, errSkip
+			return nil, ErrSkip
 		}
 		return p.TLV, nil
 	case *protocol.ManagementMsgErrorStatus:
 		if p.SequenceID != seq {
-			return nil, errSkip
+			return nil, ErrSkip
 		}
 		return nil, &ErrorStatus{ID: id, Code: p.ManagementErrorID}
 	}
-	return nil, errSkip
+	return nil, ErrSkip
 }

@@ -1,0 +1,61 @@
+[Unit]
+Description=Set ptp4l's clockClass from the ts2phc servo state
+Documentation=https://github.com/thomas-schreck/gnss_ptp_exporter/blob/main/docs/gnss_ptp_clockclass.md
+After=ptp4l.service ts2phc.service chrony.service
+Wants=ptp4l.service
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/local/bin/gnss_ptp_clockclass \
+    --ptp4l.socket=/var/run/ptp4l \
+    --ptp4l.ro-socket=/var/run/ptp4lro \
+    --ptp4l.unit=ptp4l.service \
+    --ts2phc.unit=ts2phc.service \
+    --state-file=/run/gnss_ptp_clockclass/state
+# The evaluation loop pings every second; a hanging loop is restarted.
+WatchdogSec=10s
+Restart=always
+RestartSec=2s
+# Stopping never resets the clockClass: an update or restart must not make
+# PTP clients switch grandmasters. The state file lets the next start
+# continue where this one stopped.
+TimeoutStopSec=5s
+
+# Root, but without any capability: ptp4l's read-write socket is
+# root:root 0660 (only the owner may SET), and root reads the journal.
+User=root
+CapabilityBoundingSet=
+AmbientCapabilities=
+NoNewPrivileges=yes
+# Lock memory in RAM; kept across restarts of this service, gone at boot.
+RuntimeDirectory=gnss_ptp_clockclass
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+
+# Hardening. Do not set PrivateNetwork=yes: the ptp4l client binds an
+# abstract Unix socket, which only works in ptp4l's network namespace, and
+# chronyc talks to chronyd over UDP on localhost.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectHostname=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+UMask=0077
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+
+[Install]
+WantedBy=multi-user.target

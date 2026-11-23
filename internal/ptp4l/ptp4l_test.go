@@ -345,7 +345,7 @@ func FuzzMatchResponse(f *testing.F) {
 	f.Fuzz(func(t *testing.T, b []byte) {
 		for _, id := range []protocol.ManagementID{protocol.IDDefaultDataSet, protocol.IDParentDataSet,
 			protocol.IDCurrentDataSet, protocol.IDTimeStatusNP, protocol.IDPortDataSet} {
-			tlv, err := matchResponse(b, id, 3)
+			tlv, err := MatchResponse(b, id, 3)
 			if err == nil && tlv.MgmtID() != id {
 				t.Fatalf("got TLV %#x for %#x", tlv.MgmtID(), id)
 			}

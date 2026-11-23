@@ -65,6 +65,9 @@ jobs:
           Verify a download: \`sha256sum -c SHA256SUMS --ignore-missing\` and
           \`gh attestation verify <archive> -R ${GITHUB_REPOSITORY}\`.
           The SPDX SBOM lists the Go modules compiled into the binaries.
+          Two programs: \`gnss_ptp_exporter-*\` (the read-only exporter) and
+          \`gnss_ptp_clockclass-*\` (the clockClass helper, writes to ptp4l;
+          see docs/gnss_ptp_clockclass.md).
           NOTES
           gh release create "$GITHUB_REF_NAME" $pre --verify-tag \
             --title "gnss_ptp_exporter ${GITHUB_REF_NAME}" --notes-file notes.md --generate-notes \

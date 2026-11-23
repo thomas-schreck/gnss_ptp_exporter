@@ -1,0 +1,5 @@
+1795453500.000011 timeserver systemd[1]: Started ts2phc.service - Synchronize PHC to GNSS PPS.
+1795453500.420001 timeserver ts2phc[4327]: [359182.259] UTC-TAI offset not set in system! Trying to revert to leapfile
+1795453501.000020 timeserver ts2phc[4327]: [359183.839] nmea delay: 131071997 ns
+1795453502.000025 timeserver ts2phc[4327]: [359184.839] /dev/ptp0 offset     -81245 s0 freq      +0
+1795453503.000030 timeserver ts2phc[4327]: [359185.839] /dev/ptp0 offset      -8291 s2 freq    +150

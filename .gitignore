@@ -2,3 +2,5 @@
 /dist/
 *.test
 *.out
+/gnss_ptp_clockclass
+/cmd/gnss_ptp_clockclass/gnss_ptp_clockclass
