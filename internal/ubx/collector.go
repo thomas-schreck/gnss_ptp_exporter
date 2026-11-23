@@ -119,10 +119,11 @@ func PollGPSD(ctx context.Context, addr, device string) (r Result) {
 		}
 	}
 	r.Device = device
-	dev, _ := json.Marshal(device)
-	cmds := fmt.Sprintf("?WATCH={\"device\":%s,\"enable\":true,\"raw\":2}\n", dev) +
-		fmt.Sprintf("?DEVICE={\"path\":%s,\"hexdata\":%q}\n", dev, hex.EncodeToString(Poll(ClassMON, IDMonRF))) +
-		fmt.Sprintf("?DEVICE={\"path\":%s,\"hexdata\":%q}\n", dev, hex.EncodeToString(Poll(ClassNAV, IDNavStatus)))
+	cmds, err := pollCommands(device)
+	if err != nil {
+		r.LastError = err
+		return r
+	}
 	if _, err := conn.Write([]byte(cmds)); err != nil {
 		r.LastError = err
 		return r
@@ -261,4 +262,44 @@ func Emit(ch chan<- prometheus.Metric, r Result) {
 	if r.HaveNav {
 		ch <- prometheus.MustNewConstMetric(descSpoof, prometheus.GaugeValue, float64(r.Nav.SpoofDetState))
 	}
+}
+
+// gpsdWatch and gpsdDevice are the gpsd commands the collector sends. They are
+// encoded with encoding/json so that a device path from gpsd or the command
+// line can never break out of its JSON string.
+type gpsdWatch struct {
+	Device string `json:"device"`
+	Enable bool   `json:"enable"`
+	Raw    int    `json:"raw"`
+}
+
+type gpsdDevice struct {
+	Path    string `json:"path"`
+	Hexdata string `json:"hexdata"`
+}
+
+// pollCommands returns the gpsd commands that switch the device to raw mode
+// and send the MON-RF and NAV-STATUS polls.
+func pollCommands(device string) (string, error) {
+	var b strings.Builder
+
+	for _, cmd := range []struct {
+		verb string
+		body any
+	}{
+		{"?WATCH=", gpsdWatch{Device: device, Enable: true, Raw: 2}},
+		{"?DEVICE=", gpsdDevice{Path: device, Hexdata: hex.EncodeToString(Poll(ClassMON, IDMonRF))}},
+		{"?DEVICE=", gpsdDevice{Path: device, Hexdata: hex.EncodeToString(Poll(ClassNAV, IDNavStatus))}},
+	} {
+		js, err := json.Marshal(cmd.body)
+		if err != nil {
+			return "", err
+		}
+
+		b.WriteString(cmd.verb)
+		b.Write(js)
+		b.WriteByte('\n')
+	}
+
+	return b.String(), nil
 }

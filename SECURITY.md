@@ -11,7 +11,8 @@ exposes data beyond the documented metrics over HTTP.
 
 Please **do not open a public issue.** Report privately via GitHub:
 **Security → Report a vulnerability** in this repository (private
-vulnerability reporting).
+vulnerability reporting). Direct link:
+<https://github.com/thomas-schreck/gnss_ptp_exporter/security/advisories/new>.
 
 Include the affected version or commit, a minimal reproducer (for example
 the input line or datagram) and the observed behavior. You will get an
