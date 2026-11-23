@@ -7,7 +7,7 @@ toolchain go1.27.4
 require (
 	github.com/facebook/time v0.0.0-20261123103848-0e42d8be34d2
 	github.com/prometheus/client_golang v1.25.0
-	golang.org/x/sys v0.48.0
+	golang.org/x/sys v0.50.0
 )
 
 require (
