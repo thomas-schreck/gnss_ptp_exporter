@@ -49,9 +49,17 @@ jobs:
         env:
           CGO_ENABLED: "0"
         run: |
-          GOOS=linux GOARCH=amd64 go build -o /dev/null .
-          GOOS=linux GOARCH=arm64 go build -o /dev/null .
-          GOOS=linux GOARCH=arm GOARM=7 go build -o /dev/null .
+          for pkg in . ./cmd/gnss_ptp_clockclass; do
+            GOOS=linux GOARCH=amd64 go build -o /dev/null "$pkg"
+            GOOS=linux GOARCH=arm64 go build -o /dev/null "$pkg"
+            GOOS=linux GOARCH=arm GOARM=7 go build -o /dev/null "$pkg"
+          done
+
+      - name: Release archives (dry run)
+        run: |
+          scripts/dist.sh 0.0.0-ci
+          tar -tzf dist/gnss_ptp_exporter-0.0.0-ci.linux-arm64.tar.gz | grep -qx 'gnss_ptp_exporter-0.0.0-ci.linux-arm64/gnss_ptp_exporter'
+          tar -tzf dist/gnss_ptp_clockclass-0.0.0-ci.linux-arm64.tar.gz | grep -qx 'gnss_ptp_clockclass-0.0.0-ci.linux-arm64/gnss_ptp_clockclass'
 
   lint:
     runs-on: ubuntu-latest

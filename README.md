@@ -20,6 +20,11 @@ COMMAND, never changes gpsd or receiver configuration, and writes nothing
 to disk. chrony is out of scope; use
 [chrony_exporter](https://github.com/SuperQ/chrony_exporter) next to it.
 
+**Setting the clockClass** is the job of a separate program in this
+repository, [`gnss_ptp_clockclass`](docs/gnss_ptp_clockclass.md): it
+announces clockClass 6, 7 or 248 from ts2phc's servo state and is the only
+part that writes to ptp4l. It has its own release archives.
+
 Every collector works on its own: if a component is missing or down, its
 `*_up` gauge is 0 and the other collectors keep reporting.
 

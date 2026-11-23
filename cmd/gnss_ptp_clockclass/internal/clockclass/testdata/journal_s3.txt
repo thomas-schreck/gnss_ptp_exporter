@@ -1,0 +1,3 @@
+1795461778.000045 timeserver ts2phc[4327]: [367260.839] /dev/ptp0 offset         -4 s2 freq    +141
+1795461779.000045 timeserver ts2phc[4327]: [367261.839] /dev/ptp0 offset          2 s3 freq    +146
+1795461780.000045 timeserver ts2phc[4327]: [367262.839] /dev/ptp0 offset          2 s2

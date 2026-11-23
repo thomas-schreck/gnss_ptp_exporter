@@ -1,0 +1,5 @@
+1795461778.000045 timeserver ts2phc[4327]: [367260.839] /dev/ptp0 offset         -4 s2 freq    +141
+1795461779.000045 timeserver ts2phc[4327]: [367261.839] /dev/ptp0 offset          2 s2 freq    +146
+1795461779.512345 timeserver systemd[1]: Stopping ts2phc.service - Synchronize PHC to GNSS PPS...
+1795461779.601234 timeserver systemd[1]: ts2phc.service: Deactivated successfully.
+1795461779.601299 timeserver systemd[1]: Stopped ts2phc.service - Synchronize PHC to GNSS PPS.

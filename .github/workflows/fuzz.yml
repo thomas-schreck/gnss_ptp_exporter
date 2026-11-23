@@ -2,7 +2,8 @@ name: Fuzz
 
 # Longer runs of the Go native fuzz targets (every parser of untrusted
 # input: gpsd JSON, UBX frames, ts2phc log lines, ptp4l management
-# responses). CI runs the same targets for a few seconds. A crash leaves the
+# responses, GRANDMASTER_SETTINGS_NP, chrony output, the clockClass state
+# file). CI runs the same targets for a few seconds. A crash leaves the
 # failing input as an artifact; commit it under testdata/fuzz/ as a
 # regression test.
 
@@ -41,4 +42,6 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fuzz-crashers
-          path: internal/*/testdata/fuzz/
+          path: |
+            internal/*/testdata/fuzz/
+            cmd/*/internal/*/testdata/fuzz/
